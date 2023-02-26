@@ -1,5 +1,5 @@
 ---
-title: "S&DS 627: Statistical Computing - Homework"
+title: "Web Scraping in R"
 author: "Sahil Singh"
 date: "2023-02-24"
 output: html_document
@@ -14,16 +14,11 @@ library(ggwordcloud)
 
 ## Scrape https://www.azlyrics.com/b/beatles.html to find top 10 words
 
-Load scraped RDS file (to avoid scraping again and again)
-```{r}
-lyrics <- readRDS("lyrics")
-```
-
 ### Code for scraping (do not run)
 ```{r}
-##########################
-#  ---DONT RUN AGAIN---  #
-##########################
+#########################
+#  ---RUN ONLY ONCE---  #
+#########################
 
 # # Main page
 # x <- scan("https://www.azlyrics.com/b/beatles.html", what = "", sep = "\n")
@@ -68,6 +63,11 @@ lyrics <- readRDS("lyrics")
 ##########################
 # ^^^ DONT RUN AGAIN ^^^ #
 ##########################
+```
+
+Load scraped RDS file (to avoid scraping again and again)
+```{r}
+lyrics <- readRDS("lyrics")
 ```
 
 ### Finding top ten words
@@ -145,7 +145,7 @@ ggplot(topwords[1:100,], aes(label = words, size = counts)) +
   theme_minimal()
 ```
 
-#### New Beatles song using ChatGPT <br>
+#### New Beatles song using above top 10 words using ChatGPT <br>
 <br>
 
 ##### Never Gonna Let You Go<br>
