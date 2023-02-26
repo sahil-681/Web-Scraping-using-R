@@ -2,7 +2,9 @@
 title: "Web Scraping in R"
 author: "Sahil Singh"
 date: "2023-02-24"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -12,7 +14,7 @@ library(dplyr)
 library(ggwordcloud)
 ```
 
-## Scrape https://www.azlyrics.com/b/beatles.html to find top 10 words
+## Scrape https://www.azlyrics.com/b/beatles.html for all Beatles song lyrics to analyze and visualize the top occurring unigrams, bigram and trigrams
 
 ### Code for scraping (do not run)
 ```{r}
