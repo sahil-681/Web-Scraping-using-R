@@ -70,7 +70,7 @@ Load scraped RDS file (to avoid scraping again and again)
 lyrics <- readRDS("lyrics")
 ```
 
-### Finding top ten words
+### Finding top ten words (unigrams) excluding stopwords
 
 ```{r}
 mylrc <- lyrics
@@ -145,48 +145,146 @@ ggplot(topwords[1:100,], aes(label = words, size = counts)) +
   theme_minimal()
 ```
 
-#### New Beatles song using above top 10 words using ChatGPT <br>
-<br>
+### Finding top bigrams
+#### Preprocessing data
+```{r}
+mylrc2 <- lyrics
 
-##### Never Gonna Let You Go<br>
-Verse 1:<br>
-I know you love me, oh can't you see <br>
-I'm the one for you, baby just believe<br>
-I'm not like the others, don't you know<br>
-I'll never let you go, I'll never let you go<br>
-<br>
-Chorus:<br>
-Yeah, yeah, yeah, I got you now<br>
-Oh, oh, oh, don't you ever doubt<br>
-My love for you is strong, well, you know<br>
-I'm never gonna leave, I'm never gonna go<br>
-<br>
-Verse 2:<br>
-Imperfect as I am, you accept me for me<br>
-You know all my flaws, yet you still believe<br>
-In our love, in our forever<br>
-I'm so grateful we're together<br>
-<br>
-Chorus:<br>
-Yeah, yeah, yeah, I got you now<br>
-Oh, oh, oh, don't you ever doubt<br>
-My love for you is strong, well, you know<br>
-I'm never gonna leave, I'm never gonna go<br>
-<br>
-Bridge:<br>
-Sometimes things may get rough<br>
-But with you by my side, I'm tough<br>
-I can get through anything, don't you see<br>
-As long as you're here with me<br>
-<br>
-Chorus:<br>
-Yeah, yeah, yeah, I got you now<br>
-Oh, oh, oh, don't you ever doubt<br>
-My love for you is strong, well, you know<br>
-I'm never gonna leave, I'm never gonna go<br>
-<br>
-Outro:<br>
-I love you, baby, with all my heart<br>
-And I promise, we'll never be apart<br>
-So just hold on tight, and never let go<br>
-'Cause together, we'll weather any storm, well, you know.<br>
+mylrc2 <- lapply(mylrc2, function(x) {
+  # Convert to lowercase
+  x <- tolower(x)
+  # Remove special characters
+  x <- gsub("[^[:alpha:][:space:]]", "", x)
+  # Split into words
+  x <- unlist(strsplit(x, "\\s+"))
+  # Return modified string
+  return(x)
+})
+
+# Unlist the output
+mylrc2 <- unlist(mylrc2)
+
+# Remove empty strings
+mylrc2 <- mylrc2[mylrc2 != ""]
+```
+#### Displaying top bigrams
+```{r}
+# Creating bigrams
+mylrc2 <- paste(mylrc2[-length(mylrc2)], mylrc2[-1], sep = " ")
+
+# Count the number of occurrences of each bigram
+bigram_counts <- table(mylrc2)
+
+# Sort the bigram counts in descending order
+bigram_counts <- sort(bigram_counts, decreasing = TRUE)
+
+# Displaying top 20 bigrams
+bigram_counts[1:20]
+```
+
+### Visualizing the outcome
+
+```{r}
+# Converting to dataframe for ease in visualizations
+topbigrams <- data.frame("bigrams" = as.character(names(bigram_counts)),
+                       "counts" = as.numeric(bigram_counts))
+```
+
+#### Bar plot
+```{r}
+# Horizontal bar plot
+ggplot(topbigrams[1:25,], aes(x = counts, y = bigrams)) +
+  geom_bar(stat = "identity", fill = "lightblue") +
+  labs(x = "Count", y = "Bigram", title = "Number of occurrences of top bigrams") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+#### Pie Chart
+```{r}
+percentages <- round(topbigrams$counts[1:15]/sum(topbigrams$counts[1:15])*100, 2)
+labels <- paste(topbigrams$bigrams[1:15], "(", percentages, "%)", sep = "")
+
+pie(topbigrams$counts[1:15], labels = labels, main = "Bigram Occurrences")
+```
+
+#### Word cloud
+```{r}
+# Create word cloud of bigrams using ggplot2
+ggplot(topbigrams[1:25,], aes(label = bigrams, size = counts)) +
+  geom_text_wordcloud() +
+  scale_size(range = c(2, 10)) +
+  theme_minimal()
+```
+
+### Finding top trigrams
+#### Preprocessing data
+```{r}
+mylrc3 <- lyrics
+
+mylrc3 <- lapply(mylrc3, function(x) {
+  # Convert to lowercase
+  x <- tolower(x)
+  # Remove special characters
+  x <- gsub("[^[:alpha:][:space:]]", "", x)
+  # Split into words
+  x <- unlist(strsplit(x, "\\s+"))
+  # Return modified string
+  return(x)
+})
+
+# Unlist the output
+mylrc3 <- unlist(mylrc3)
+
+# Remove empty strings
+mylrc3 <- mylrc3[mylrc3 != ""]
+```
+#### Displaying top trigrams
+```{r}
+# Creating trigrams
+mylrc3 <- paste(mylrc2, c(mylrc3[-(1:2)], ""), sep = " ")
+
+# Count the number of occurrences of each trigrams
+trigrams_counts <- table(mylrc3)
+
+# Sort the trigrams counts in descending order
+trigrams_counts <- sort(trigrams_counts, decreasing = TRUE)
+
+# Displaying top 20 bigrams
+trigrams_counts[1:20]
+```
+
+### Visualizing the outcome
+
+```{r}
+# Converting to dataframe for ease in visualizations
+toptrigrams <- data.frame("trigrams" = as.character(names(trigrams_counts)),
+                       "counts" = as.numeric(trigrams_counts))
+```
+
+#### Bar plot
+```{r}
+# Horizontal bar plot
+ggplot(toptrigrams[1:25,], aes(x = counts, y = trigrams)) +
+  geom_bar(stat = "identity", fill = "lightblue") +
+  labs(x = "Count", y = "Trigrams", title = "Number of occurrences of top trigrams") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+#### Pie Chart
+```{r}
+percentages <- round(toptrigrams$counts[1:15]/sum(toptrigrams$counts[1:15])*100, 2)
+labels <- paste(toptrigrams$trigrams[1:15], "(", percentages, "%)", sep = "")
+
+pie(toptrigrams$counts[1:15], labels = labels, main = "Trigram Occurrences")
+```
+
+#### Word cloud
+```{r}
+# Create word cloud of trigrams using ggplot2
+ggplot(toptrigrams[1:25,], aes(label = trigrams, size = counts)) +
+  geom_text_wordcloud() +
+  scale_size(range = c(2, 10)) +
+  theme_minimal()
+```
