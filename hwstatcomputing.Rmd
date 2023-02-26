@@ -1,0 +1,192 @@
+---
+title: "S&DS 627: Statistical Computing - Homework"
+author: "Sahil Singh"
+date: "2023-02-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+library(ggwordcloud)
+```
+
+## Scrape https://www.azlyrics.com/b/beatles.html to find top 10 words
+
+Load scraped RDS file (to avoid scraping again and again)
+```{r}
+lyrics <- readRDS("lyrics")
+```
+
+### Code for scraping (do not run)
+```{r}
+##########################
+#  ---DONT RUN AGAIN---  #
+##########################
+
+# # Main page
+# x <- scan("https://www.azlyrics.com/b/beatles.html", what = "", sep = "\n")
+# 
+# ## Getting all urls from the main page for each song
+# urls <- list()
+# for (i in 1:length(x)) {
+#   # extract URLs using regular expressions
+#   urls[[i]] <- ifelse(grepl('href="/lyrics/beatles', x[i]),
+#                       paste0("https://www.azlyrics.com", ## Completing link
+#                              gsub('.*href="(/lyrics/beatles.*?)".*',
+#                                   '\\1',
+#                                   x[i])),
+#                       NA)
+# }
+# urls <- urls[is.na(urls) == F] # Dropping NAs
+# 
+# ## Getting lyrics from all the urls
+# 
+# lyrics <- list()
+# 
+# # Define the time interval in seconds for loop delay
+# time_interval <- 330 # 5.5 minutes
+# 
+# # Running loop at specified time intervals as IP Address updates in background
+# for (j in 1:48) {
+#   # Scraping each link to extract the lyrics
+#   for (i in (length(lyrics)+1):(length(lyrics)+9)) {
+#     y <- scan(urls[[i]], what = "", sep = "\n")
+#     a <- grep("<!-- Usage of azlyrics.com content by any third-party lyrics provider is prohibited by our licensing agreement. Sorry about that. -->", y)
+#     b <- grep("</div>", y[a+1:length(y)])[1] + a
+#     slyrics <- y[(a+1):(b-1)]
+#     lyrics[[i]] <- lapply(slyrics, function(x) gsub("<br>", "", x))
+#   }
+#   # Pause the execution of the loop for 5.5 minutes to update IP Address
+#   Sys.sleep(time_interval)
+# }
+# 
+# # saving file for future use
+# saveRDS(lyrics, file="lyrics")
+
+##########################
+# ^^^ DONT RUN AGAIN ^^^ #
+##########################
+```
+
+### Finding top ten words
+
+```{r}
+mylrc <- lyrics
+
+mylrc <- lapply(mylrc, function(x) {
+  # Convert to lowercase
+  x <- tolower(x)
+  # Remove special characters
+  x <- gsub("[^[:alpha:][:space:]]", "", x)
+  # Split into words
+  x <- unlist(strsplit(x, "\\s+"))
+  # Return modified string
+  return(x)
+})
+
+# Unlist the output
+mylrc <- unlist(mylrc)
+
+# Remove empty strings
+mylrc <- mylrc[mylrc != ""]
+
+# Scan stop words from "https://gist.githubusercontent.com/sebleier/554280/raw/7e0e4a1ce04c2bb7bd41089c9821dbcf6d0c786c/NLTK's%2520list%2520of%2520english%2520stopwords"
+stopwords <- scan("https://gist.githubusercontent.com/sebleier/554280/raw/7e0e4a1ce04c2bb7bd41089c9821dbcf6d0c786c/NLTK's%2520list%2520of%2520english%2520stopwords", 
+          what = "", 
+          sep = "\n")
+
+# Remove stop words
+mylrc <- mylrc[!(mylrc %in% stopwords)]
+
+# Count the number of occurrences of each word
+word_counts <- table(mylrc)
+
+# Sort the word counts in descending order
+word_counts <- sort(word_counts, decreasing = TRUE)
+
+# Displaying top ten words
+word_counts[1:10]
+```
+
+### Visualizing the outcome
+
+```{r}
+# Converting to dataframe for ease in visualizations
+topwords <- data.frame("words" = as.character(names(word_counts)),
+                 "counts" = as.numeric(word_counts))
+```
+
+#### Bar plot
+```{r}
+# Horizontal bar plot
+ggplot(topwords[1:10,], aes(x = counts, y = words)) +
+  geom_bar(stat = "identity", fill = "lightblue") +
+  labs(x = "Count", y = "Word", title = "Number of occurrences of top words") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+#### Pie Chart
+```{r}
+percentages <- round(topwords$counts[1:10]/sum(topwords$counts[1:10])*100, 2)
+labels <- paste(topwords$words[1:10], "(", percentages, "%)", sep = "")
+
+pie(topwords$counts[1:10], labels = labels, main = "Word Occurrences")
+```
+
+#### Word cloud
+```{r}
+# Create word cloud using ggplot2
+ggplot(topwords[1:100,], aes(label = words, size = counts)) +
+  geom_text_wordcloud() +
+  scale_size(range = c(2, 10)) +
+  theme_minimal()
+```
+
+#### New Beatles song using ChatGPT <br>
+<br>
+
+##### Never Gonna Let You Go<br>
+Verse 1:<br>
+I know you love me, oh can't you see <br>
+I'm the one for you, baby just believe<br>
+I'm not like the others, don't you know<br>
+I'll never let you go, I'll never let you go<br>
+<br>
+Chorus:<br>
+Yeah, yeah, yeah, I got you now<br>
+Oh, oh, oh, don't you ever doubt<br>
+My love for you is strong, well, you know<br>
+I'm never gonna leave, I'm never gonna go<br>
+<br>
+Verse 2:<br>
+Imperfect as I am, you accept me for me<br>
+You know all my flaws, yet you still believe<br>
+In our love, in our forever<br>
+I'm so grateful we're together<br>
+<br>
+Chorus:<br>
+Yeah, yeah, yeah, I got you now<br>
+Oh, oh, oh, don't you ever doubt<br>
+My love for you is strong, well, you know<br>
+I'm never gonna leave, I'm never gonna go<br>
+<br>
+Bridge:<br>
+Sometimes things may get rough<br>
+But with you by my side, I'm tough<br>
+I can get through anything, don't you see<br>
+As long as you're here with me<br>
+<br>
+Chorus:<br>
+Yeah, yeah, yeah, I got you now<br>
+Oh, oh, oh, don't you ever doubt<br>
+My love for you is strong, well, you know<br>
+I'm never gonna leave, I'm never gonna go<br>
+<br>
+Outro:<br>
+I love you, baby, with all my heart<br>
+And I promise, we'll never be apart<br>
+So just hold on tight, and never let go<br>
+'Cause together, we'll weather any storm, well, you know.<br>
